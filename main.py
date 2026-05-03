@@ -9,7 +9,8 @@ def load_json(file_name):
     try:
         with open(file_name, 'r', encoding='utf-8') as f:
             return json.load(f)
-    except FileNotFoundError:
+    except Exception as e:
+        print(f"Error loading {file_name}: {e}")
         return None
 
 # ফাইলগুলো লোড করা হচ্ছে
@@ -26,40 +27,43 @@ class EnafulBot(Client):
         if author_id == self.uid:
             return
 
+        # মেসেজ না থাকলে বা টেক্সট না থাকলে স্কিপ করবে
+        if not message_object.text:
+            return
+
         user_msg = str(message_object.text).lower()
         admin_id = admin_config.get("admin_id", "100001890117053")
         dev_tag = "\n\n(developer by ENAFUL)"
 
         # ১. অ্যাডমিন যদি মেসেজ দেয়
-        if author_id == admin_id:
+        if str(author_id) == str(admin_id):
             reply = admin_config.get("admin_greeting", "আসসালামু আলাইকুম বস!")
             self.send(Message(text=reply + dev_tag), thread_id=thread_id, thread_type=thread_type)
             return
 
         # ২. পরিচয় জানতে চাইলে
-        if "কে" in user_msg or "identity" in user_msg or "who are you" in user_msg:
-            reply = random.choice(identity_data['replies'])
+        if any(word in user_msg for word in ["কে", "identity", "who are you"]):
+            reply = random.choice(identity_data['replies']) if identity_data else "আমি একজন এআই বট।"
             self.send(Message(text=reply + dev_tag), thread_id=thread_id, thread_type=thread_type)
 
         # ৩. কাজের বিষয়ে বা প্রজেক্ট নিয়ে
-        elif "কাজ" in user_msg or "work" in user_msg or "project" in user_msg:
-            reply = random.choice(work_data['replies'])
+        elif any(word in user_msg for word in ["কাজ", "work", "project"]):
+            reply = random.choice(work_data['replies']) if work_data else "কাজ চলছে..."
             self.send(Message(text=reply + dev_tag), thread_id=thread_id, thread_type=thread_type)
 
         # ৪. ফানি বা মজার কিছু চাইলে
-        elif "মজা" in user_msg or "funny" in user_msg:
-            reply = random.choice(funny_data['replies'])
+        elif any(word in user_msg for word in ["মজা", "funny"]):
+            reply = random.choice(funny_data['replies']) if funny_data else "হাহাহা!"
             self.send(Message(text=reply + dev_tag), thread_id=thread_id, thread_type=thread_type)
 
         # ৫. হট বা বোল্ড কিছু চাইলে
-        elif "hot" in user_msg or "আগুন" in user_msg:
-            reply = random.choice(hot_data['replies'])
+        elif any(word in user_msg for word in ["hot", "আগুন"]):
+            reply = random.choice(hot_data['replies']) if hot_data else "🔥"
             self.send(Message(text=reply + dev_tag), thread_id=thread_id, thread_type=thread_type)
 
-        # ৬. নরমাল হাই/হ্যালো বা অন্যান্য ক্ষেত্রে ফ্লার্টিং/জেনারেল রিপ্লাই
+        # ৬. ডিফল্ট হিসেবে ফ্লার্টিং বক্স থেকে রিপ্লাই
         else:
-            # ডিফল্ট হিসেবে ফ্লার্টিং বক্স থেকে রিপ্লাই দিবে
-            reply = random.choice(flirt_data['replies'])
+            reply = random.choice(flirt_data['replies']) if flirt_data else "হাই!"
             self.send(Message(text=reply + dev_tag), thread_id=thread_id, thread_type=thread_type)
 
 # ফেসবুক কুকি দিয়ে লগইন করা
@@ -70,8 +74,11 @@ try:
     # কুকি ফরম্যাট ঠিক করা
     session_cookies = {c['key']: c['value'] for c in cookies}
     
-    client = EnafulBot(' ', ' ', session_cookies=session_cookies)
-    print("ENAFUL Bot is running...")
+    # আপনার রিকোয়েস্ট অনুযায়ী ইউজার এজেন্ট অ্যাডজাস্ট করা হলো
+    ua = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+    
+    client = EnafulBot(' ', ' ', session_cookies=session_cookies, user_agent=ua)
+    print("ENAFUL Bot is running successfully...")
     client.listen()
 except Exception as e:
-    print(f"Error: {e}")
+    print(f"Login failed: {e}")
