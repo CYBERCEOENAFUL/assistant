@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 */6 * * *' # প্রতি ৬ ঘণ্টা অন্তর অটো রান হবে
+    - cron: '0 */6 * * *'
 
 jobs:
   build:
@@ -24,10 +24,13 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # যদি ফাইল থাকে তবেই ইনস্টল করবে, নয়তো স্কিপ করবে
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # সরাসরি fbchat ইনস্টল করে রাখা ভালো যদি ফাইল না থাকে
+          pip install fbchat requests 
 
       - name: Run ENAFUL Bot
         env:
           FB_COOKIE: ${{ secrets.FB_COOKIE }}
           ADMIN_ID: "100001890117053"
-        run: python main.py # আপনার মেইন ফাইলের নাম এখানে দিন
+        run: python main.py
